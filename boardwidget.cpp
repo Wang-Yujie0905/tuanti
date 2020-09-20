@@ -1,6 +1,8 @@
 #include "boardwidget.h"
 #include <QPainter>
 #include <QMouseEvent>
+#include <QFile>
+#include <QDataStream>
 
 /*类静态数据成员定义*/
 const QSize BoardWidget::WIDGET_SIZE(430, 430);
@@ -16,7 +18,6 @@ const int BoardWidget::BLACK_PIECE;
 const bool BoardWidget::WHITE_PLAYER;
 const bool BoardWidget::BLACK_PLAYER;
 
-
 BoardWidget::BoardWidget(QWidget *parent) :
     QWidget(parent),
     trackPos(28, 28)
@@ -25,13 +26,12 @@ BoardWidget::BoardWidget(QWidget *parent) :
     setMouseTracking(true);
 
     initBoard();
-
 }
 
 void BoardWidget::paintEvent(QPaintEvent *event)
 {
     QPainter painter(this);
-    painter.fillRect(0, 0, width(), height(), Qt::gray);	//背景颜色
+    painter.fillRect(0, 0, width(), height(), Qt::lightGray);	//背景颜色
 
     for (int i = 0; i < BOARD_WIDTH; i++)
     {
@@ -90,8 +90,9 @@ void BoardWidget::paintEvent(QPaintEvent *event)
     }
 
     painter.setPen(Qt::red);
-    if (lastPos.x() != -1)
+    if (!dropedPieces.isEmpty())
     {
+        QPoint lastPos = dropedPieces.top();
         QPoint drawPos = START_POS + QPoint(lastPos.x() * CELL_SIZE.width(), lastPos.y() * CELL_SIZE.height());
         painter.drawLine(drawPos + QPoint(0, 5), drawPos + QPoint(0, -5));
         painter.drawLine(drawPos + QPoint(5, 0), drawPos + QPoint(-5, 0));
@@ -107,7 +108,7 @@ void BoardWidget::paintEvent(QPaintEvent *event)
 
 void BoardWidget::mouseReleaseEvent(QMouseEvent *event)
 {
-    if (!endGame)
+    if (receivePlayers.contains(nextPlayer) && !endGame)
     {
         QPoint pos = event->pos() - START_POS;
         int x = pos.x();
@@ -144,31 +145,63 @@ void BoardWidget::mouseMoveEvent(QMouseEvent *event)
     setTrackPos(QPoint(x - offsetX, y - offsetY) + START_POS - QPoint(CELL_SIZE.width()/2, CELL_SIZE.height()/2));
 }
 
+
 void BoardWidget::initBoard()
 {
-    for (int i = 0; i < BOARD_WIDTH; i++)
-    {
-        for (int j = 0; j < BOARD_HEIGHT; j++)
-        {
-            board[i][j] = NO_PIECE;
-        }
-    }
-    lastPos = QPoint(-1, -1);
-    endGame = false;
-    winPoses.clear();
-    nextPlayer = BLACK_PLAYER;
+    receivePlayers << WHITE_PLAYER << BLACK_PLAYER;
+    newGame();
 }
 
 void BoardWidget::downPiece(int x, int y)
 {
     if (x >= 0 && x < BOARD_WIDTH && y >= 0 && y < BOARD_HEIGHT && board[x][y] == NO_PIECE)
     {
+        dropedPieces.push(QPoint(x, y));
         board[x][y] = (nextPlayer == WHITE_PLAYER) ? WHITE_PIECE : BLACK_PIECE;
-        nextPlayer = !nextPlayer;
-        lastPos = QPoint(x, y);
-        checkWinner();
         update();
+        checkWinner();
+        if (!endGame)
+        {
+            switchNextPlayer();
+        }
     }
+}
+
+void BoardWidget::undo(int steps)
+{
+    if (!endGame)
+    {
+        for (int i = 0; i < steps && !dropedPieces.isEmpty(); i++)
+        {
+            QPoint pos = dropedPieces.pop();
+            board[pos.x()][pos.y()] = NO_PIECE;
+        }
+
+        update();
+        switchNextPlayer();
+    }
+}
+
+void BoardWidget::setTrackPos(const QPoint &value)
+{
+    trackPos = value;
+    update();
+}
+
+void BoardWidget::setReceivePlayers(const QSet<int> &value)
+{
+    receivePlayers = value;
+}
+
+Board BoardWidget::getBoard()
+{
+    return board;
+}
+
+void BoardWidget::switchNextPlayer()
+{
+    nextPlayer = !nextPlayer;
+    emit turnNextPlayer(nextPlayer);
 }
 
 void BoardWidget::checkWinner()
@@ -274,9 +307,20 @@ bool BoardWidget::isBSFivePieceFrom(int x, int y)
     return true;
 }
 
-void BoardWidget::setTrackPos(const QPoint &value)
-{
-    trackPos = value;
-    update();
-}
 
+void BoardWidget::newGame()
+{
+    for (int i = 0; i < BOARD_WIDTH; i++)
+    {
+        for (int j = 0; j < BOARD_HEIGHT; j++)
+        {
+            board[i][j] = NO_PIECE;
+        }
+    }
+    winPoses.clear();
+    dropedPieces.clear();
+    nextPlayer = BLACK_PLAYER;
+    endGame = false;
+    update();
+    emit turnNextPlayer(nextPlayer);
+}
