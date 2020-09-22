@@ -3,6 +3,9 @@
 #include <QMouseEvent>
 #include <QFile>
 #include <QDataStream>
+#include <QMediaPlayer>
+#include <QDebug>
+#include <QMediaPlaylist>
 
 /*类静态数据成员定义*/
 const QSize BoardWidget::WIDGET_SIZE(430, 430);
@@ -32,6 +35,10 @@ void BoardWidget::paintEvent(QPaintEvent *event)
 {
     QPainter painter(this);
     painter.fillRect(0, 0, width(), height(), Qt::lightGray);	//背景颜色
+
+        /*QPainter painter(this);
+        painter.drawPixmap(0,0,this->width(),this->height(),QPixmap(":/images/frame.jpg"));*/
+
 
     for (int i = 0; i < BOARD_WIDTH; i++)
     {
@@ -307,7 +314,6 @@ bool BoardWidget::isBSFivePieceFrom(int x, int y)
     return true;
 }
 
-
 void BoardWidget::newGame()
 {
     for (int i = 0; i < BOARD_WIDTH; i++)
@@ -323,4 +329,131 @@ void BoardWidget::newGame()
     endGame = false;
     update();
     emit turnNextPlayer(nextPlayer);
+
+    QMediaPlaylist *playList = new QMediaPlaylist(this);
+    playList->addMedia(QUrl("qrc:///music/music.wav"));
+    playList->setPlaybackMode(QMediaPlaylist::CurrentItemInLoop); //单曲循环
+    QMediaPlayer *player = new QMediaPlayer(this);
+    player->setPlaylist(playList);
+    player->setVolume(30);
+
+    player->play();
+
 }
+/*bool BoardWidget::nohands(int row,int col){
+    int count = 0;                                     //禁手最少四子相连，循环四次
+            int num(0);
+            int numm(0);//记录几个方向出现四子及以上相连
+            int winflag = 1;                                   //记录连续棋子相连个数
+            int i, j;
+            int cur;
+            cur=1;
+            for (i = row-1, j = col; i > 0 && count++ < 5; i--)   //竖向判断
+            {
+                if (board[i][j] == cur)
+                    winflag++;
+                else
+                    break;
+            }
+            count = 0;
+            for (i = row+1, j = col; i < 21 && count++ < 5; i++)
+            {
+                if (board[i][j] == cur)
+                    winflag++;
+                else
+                    break;
+            }
+            count = 0;
+            if (winflag == 4 ) {
+                num++;                                    //出现则次数加一
+                winflag = 1;
+            }
+            else if(winflag==5){
+                numm++;
+                winflag=1;
+            }
+
+            else
+                winflag = 1;
+            for (i = row, j = col+1; j < 21 && count++ < 5; j++)    //横向判断
+            {
+                if (board[i][j] == cur)
+                    winflag++;
+                else
+                    break;
+            }
+            count = 0;
+            for (i = row, j = col-1; j > 0 && count++ < 5; j--)
+            {
+                if (board[i][j] == cur)
+                    winflag++;
+                else
+                    break;
+            }
+            count = 0;
+            if (winflag ==4) {
+                num++;
+                winflag = 1;
+            }
+            else if(winflag==5){
+                numm++;
+                winflag=1;
+            }
+            else
+                winflag = 1;
+            for (i = row+1, j = col+1; i < 21 && j < 21 && count++ < 5; i++, j++)
+            {
+                if (board[i][j] == cur)
+                    winflag++;
+                else
+                    break;
+            }
+            count = 0;
+            for (i = row-1, j = col-1; i > 0 && j > 0 && count++ < 5; i--, j--)  //左斜判断
+            {
+                if (board[i][j] == cur)
+                    winflag++;
+                else
+                    break;
+            }
+            count = 0;
+            if (winflag ==4) {
+                num++;
+                winflag = 1;
+            }
+            else if(winflag==5) {
+                numm++;
+                winflag=1;
+            }
+            else
+                winflag = 1;
+            for (i = row-1, j = col+1; i > 0 && j < 21 && count++ < 5; i--, j++)   //右斜判断
+            {
+                if (board[i][j] == cur)
+                    winflag++;
+                else
+                    break;
+            }
+            count = 0;
+            for (i = row+1, j = col-1; i < 21 && j > 0 && count++ < 5; i++, j--)
+            {
+                if (board[i][j] == cur)
+                    winflag++;
+                else
+                    break;
+            }
+            count = 0;
+            if (winflag ==4) {
+                num++;
+                winflag = 1;
+            }
+            else if(winflag==5){
+                numm++;
+                winflag=1;
+            }
+            else
+                winflag = 1;
+            if (num >= 2||numm>=2) return true;      //出现最少两个方向禁手，则返回白子胜利
+            else return false;
+    }*/
+

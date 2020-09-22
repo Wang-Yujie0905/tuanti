@@ -5,6 +5,8 @@
 #include <QFileDialog>
 #include <QLabel>
 #include <QDebug>
+#include <QMediaPlayer>
+#include <QMediaPlaylist>
 
 GameWidget::GameWidget(QWidget *parent)
     : QWidget(parent)
@@ -14,6 +16,13 @@ GameWidget::GameWidget(QWidget *parent)
     initWidget();
 
     switchHumanGame();
+
+    QMediaPlayer *player = new QMediaPlayer(this);
+    connect(player, SIGNAL(positionChanged(qint64)), this, SLOT(positionChanged(qint64)));
+    player->setMedia(QUrl::fromLocalFile("C:\\Users\\pcyyyyy\\Music\\余佳运 - 和你.mp3"));
+        player->setVolume(30);
+        player->play();
+
 }
 
 GameWidget::~GameWidget()
@@ -66,6 +75,7 @@ void GameWidget::initWidget()
     connect(humanGameBtn, &QPushButton::clicked, this, &GameWidget::switchHumanGame);
     connect(aiGameBtn, &QPushButton::clicked, this, &GameWidget::switchAiGame);
     connect(undoBtn, &QPushButton::clicked, this, &GameWidget::undo);
+
 }
 
 

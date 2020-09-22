@@ -52,6 +52,7 @@ public slots:
     //落子
     void downPiece(int x, int y);
     void undo(int steps);	//悔棋
+    //void nohands(int x,int y);
 
 public:
     static const QSize WIDGET_SIZE;         //棋盘控件大小

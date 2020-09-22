@@ -44,6 +44,7 @@ private:
     QPushButton *humanGameBtn;  //双人游戏按钮
     QPushButton *aiGameBtn;     //ai对战按钮
     QPushButton *undoBtn;       //悔棋按钮
+
 };
 
 #endif // GAMEWIDGET_H
